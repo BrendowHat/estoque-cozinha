@@ -241,7 +241,7 @@ body.ro .edit-only { display: none !important; }
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="config.js?v=1794883543"></script>
+<script src="config.js?v=1794883664"></script>
 </head>
 <body>
 <div class="wrap">
@@ -1382,7 +1382,7 @@ const ROOM = (function () {
   const VD_NOTE = "Vitamina D vem pouco da comida: o principal é sol e, se o médico indicar, suplemento.";
   function richIn(k, n, excl) {
     return [...items].filter(([id, it]) => it.nut && it.nut.m && it.nut.m[k] && it.tag !== "evitar" && !["doce", "bebida"].includes(it.cat) && !URIC_IDS.includes(id) && !(excl || []).includes(id) && it.cat !== "tempero")
-      .map(([id, it]) => [id, it, it.nut.m[k] / Math.max(it.nut.k || 1, 20)]).sort((a, b) => b[2] - a[2]).slice(0, n);
+      .map(([id, it]) => { const pr = porcao(it); return [id, it, it.nut.m[k] * pr / (1 + (it.nut.k || 0) * pr / 100 / 250)]; }).sort((a, b) => b[2] - a[2]).slice(0, n);
   }
   const ingGrams = g => { const it = items.get(g.id); if (!it) return 0; return it.unit === "un" ? (g.g || (+g.q || 0) * ((it.nut && it.nut.pg) || 50)) : +g.q || 0; };
   function dayMicro(d) {
