@@ -115,6 +115,25 @@ nav.bottom a i { position: absolute; top: -6px; right: 4px; font-style: normal; 
 .potk b { font-size: 34px; font-weight: normal; line-height: 1; font-variant-numeric: tabular-nums; }
 .potk span { font-family: var(--font-display); font-size: 7px; color: var(--muted); line-height: 1.6; }
 .macros { padding: 10px 12px; display: grid; gap: 8px; }
+.micro { padding: 10px 12px; }
+.micro summary { cursor: pointer; font-family: var(--font-display); font-size: 8px; letter-spacing: 1px; list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.micro summary::-webkit-details-marker { display: none; }
+.micro summary small { font-family: inherit; font-size: 17px; color: var(--muted); letter-spacing: 0; }
+.mgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 8px; }
+@media (max-width: 520px) { .mgrid { grid-template-columns: repeat(2, 1fr); } }
+.mc { background: var(--ink); border: 2px solid var(--panel-2); padding: 4px 6px; font-size: 16px; display: grid; gap: 3px; }
+.mc b { display: flex; justify-content: space-between; font-weight: normal; }
+.mc b i { font-style: normal; font-variant-numeric: tabular-nums; }
+.mc s { display: block; height: 6px; background: var(--panel-2); text-decoration: none; position: relative; }
+.mc s u { position: absolute; left: 0; top: 0; bottom: 0; text-decoration: none; }
+.mc.low b i { color: var(--mod); } .mc.mid b i { color: var(--accent); } .mc.ok b i { color: var(--ok); } .mc.bad b i { color: var(--warn); }
+.mc.low s u { background: var(--mod); } .mc.mid s u { background: var(--accent); } .mc.ok s u { background: var(--ok); } .mc.bad s u { background: var(--warn); }
+.mc.foco { border-color: var(--accent); }
+.mhint { font-size: 17px; color: var(--muted); margin-top: 8px; display: grid; gap: 4px; }
+.mhint b { color: var(--text); font-weight: normal; }
+#potfoco { flex-wrap: wrap; }
+#potfoco button { flex: 1 1 30%; }
+.flabel { font-family: var(--font-display); font-size: 7px; color: var(--muted); margin: 8px 0 4px; letter-spacing: 1px; }
 .mrow { display: grid; grid-template-columns: 92px 1fr 92px; gap: 8px; align-items: center; font-size: 19px; }
 .mrow span:first-child { font-family: var(--font-display); font-size: 7px; color: var(--muted); }
 .mrow span:last-child { text-align: right; font-variant-numeric: tabular-nums; }
@@ -222,7 +241,7 @@ body.ro .edit-only { display: none !important; }
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="config.js?v=1794882905"></script>
+<script src="config.js?v=1794883543"></script>
 </head>
 <body>
 <div class="wrap">
@@ -283,7 +302,13 @@ body.ro .edit-only { display: none !important; }
       <canvas id="pot" role="img" aria-label="Caldeirão com os itens escolhidos"></canvas>
       <div class="potk"><b id="pot-k">0</b><span id="pot-kt">kcal</span></div>
     </div>
+    <div class="flabel">FOCO DA REFEIÇÃO</div>
+    <div class="seg" id="potfoco">
+      <button data-foco="eq">EQUILIBRADO</button><button data-foco="prot">+ PROTEÍNA</button><button data-foco="lowc">− CARBO</button>
+      <button data-foco="fib">+ FIBRA</button><button data-foco="vd">VITAMINA D</button><button data-foco="vit">+ VITAMINAS</button>
+    </div>
     <div class="macros px" id="pot-macros"></div>
+    <details class="micro px" id="pot-micro" open></details>
     <div class="px" id="pot-msg"></div>
     <h3 class="st">NO CALDEIRÃO</h3>
     <div class="rows" id="pot-list"></div>
@@ -328,6 +353,7 @@ body.ro .edit-only { display: none !important; }
     </div>
     <p class="note" id="rnd-info"></p>
     <div class="totals" id="daytot"></div>
+    <details class="micro px" id="day-micro"></details>
     <div class="px" id="meals"></div>
     <h3 class="st">CALORIAS POR DIA</h3>
     <div class="px"><div class="bars" id="bars"></div><div class="bars-l" id="barsl"></div></div>
@@ -1054,6 +1080,7 @@ const ROOM = (function () {
       '<div class="stat ' + (t.p >= cfg.prot * 0.95 ? "ok" : "warn") + '"><b>' + num(t.p) + ' g</b><span>PROTEÍNA</span></div>' +
       '<a class="stat ' + (missing.size ? "warn" : "ok") + '" href="#compras" style="text-decoration:none;color:inherit"><b>' + missing.size + '</b><span>INGREDIENTES FALTANDO</span></a>';
     $("meals").innerHTML = SLOTS.map(s => mealHTML(s, m[s.id], true, st.day)).join("");
+    renderDayMicro();
     const tots = DAYS.map(([d]) => dayTotals(d).k), mx = Math.max(cfg.kcal * 1.2, ...tots);
     $("bars").innerHTML = DAYS.map(([d], i) => '<div class="' + (d === st.day ? "on" : "") + '" style="height:' + Math.max(4, tots[i] / mx * 100).toFixed(0) + '%" title="' + num(tots[i]) + ' kcal"></div>').join("");
     $("barsl").innerHTML = DAYS.map(([, l], i) => '<span>' + l + '<br>' + num(tots[i]) + '</span>').join("");
@@ -1235,6 +1262,7 @@ const ROOM = (function () {
     if (t.id === "pot-clear") { pot = []; savePot(); renderPot(); return; }
     if (t.id === "pot-save") return potSaveRec();
     if (t.id === "pot-bal") return potBalance();
+    if (d.foco) { potFoco = d.foco; savePot(); renderPot(); return; }
     if (t.id === "pot-undo") { if (potUndo) { pot = potUndo; potUndo = null; savePot(); renderPot(); toast("Caldeirão voltou como estava."); } return; }
     if (d.zone) { st.zone = d.zone; go("estoque"); if (st.page === "estoque") render(); return; }
     if (d.view) { st.view = d.view; render(); return; }
@@ -1300,6 +1328,7 @@ const ROOM = (function () {
     const nv = f => $(f).value === "" ? null : Math.max(0, +$(f).value);
     let nut = null;
     if (nv("f-nk") !== null) { nut = { k: nv("f-nk"), p: nv("f-np") || 0, c: nv("f-nc") || 0, g: nv("f-ng") || 0 }; if (nv("f-npg")) nut.pg = nv("f-npg"); if (nv("f-npor")) nut.por = nv("f-npor"); }
+    { const old = editing && items.get(editing); if (old && old.nut && old.nut.m) { nut = nut || {}; nut.m = old.nut.m; } }
     items.set(id, { name, zone: $("f-zone").value, cat: $("f-cat").value, qty: Math.max(0, +$("f-qty").value || 0), unit, min: Math.max(0, +$("f-min").value || 0),
       step: Math.max(0.1, +$("f-step").value || (unit === "un" ? 1 : 100)), tag: $("f-tag").value, spr: iconSel, sprFix: !!(editing && ITEM_PNG[editing] && !ITEM_PNG[iconSel]), note: $("f-note").value.trim(), nut });
     $("modal").classList.remove("show"); render(); saveItem(id); toast(name + " salvo.");
@@ -1328,23 +1357,71 @@ const ROOM = (function () {
     try { await fdb.collection("receitas").doc(id).set(r); toast("Receita salva."); } catch (err) { failed(err); }
   });
 
+  /* ---------- Vitaminas e minerais ---------- */
+  const MIC = [
+    { k: "fib", n: "Fibras", u: "g", d: 30 }, { k: "vc", n: "Vit. C", u: "mg", d: 90 }, { k: "va", n: "Vit. A", u: "µg", d: 900 },
+    { k: "vd", n: "Vit. D", u: "µg", d: 15 }, { k: "b12", n: "Vit. B12", u: "µg", d: 2.4 }, { k: "fol", n: "Folato", u: "µg", d: 400 },
+    { k: "fe", n: "Ferro", u: "mg", d: 8 }, { k: "ca", n: "Cálcio", u: "mg", d: 1000 }, { k: "mg", n: "Magnésio", u: "mg", d: 400 },
+    { k: "zn", n: "Zinco", u: "mg", d: 11 }, { k: "pot", n: "Potássio", u: "mg", d: 3400 }, { k: "na", n: "Sódio", u: "mg", d: 2000, lim: true }
+  ];
+  const MICN = Object.fromEntries(MIC.map(m => [m.k, m]));
+  const micOf = (id, g) => { const it = items.get(id); const m = it && it.nut && it.nut.m; if (!m) return null; const o = {}; MIC.forEach(x => { o[x.k] = (m[x.k] || 0) * g / 100; }); return o; };
+  function micSum(list) { // list: [{id, g}]
+    const t = Object.fromEntries(MIC.map(m => [m.k, 0])); const sem = [];
+    list.forEach(x => { const o = micOf(x.id, x.g); if (!o) { if (!sem.includes(x.id)) sem.push(x.id); return; } MIC.forEach(m => { t[m.k] += o[m.k]; }); });
+    return { t, sem };
+  }
+  const fmtMic = (v, u) => (v >= 100 ? num(Math.round(v)) : v >= 10 ? num(Math.round(v)) : num(Math.round(v * 10) / 10)) + " " + u;
+  function micGrid(t, share, foco) {
+    return '<div class="mgrid">' + MIC.map(m => {
+      const alvo = m.d * share, pc = alvo ? t[m.k] / alvo * 100 : 0;
+      const cls = m.lim ? (pc > 100 ? "bad" : "ok") : pc >= 100 ? "ok" : pc >= 40 ? "mid" : "low";
+      return '<div class="mc ' + cls + (foco === m.k ? " foco" : "") + '" title="' + esc(fmtMic(t[m.k], m.u) + " de " + fmtMic(alvo, m.u) + (m.lim ? " (limite)" : "")) + '"><b>' + m.n + '<i>' + Math.round(pc) + '%' + (m.lim ? " lim." : "") + '</i></b><s><u style="width:' + Math.min(100, pc).toFixed(0) + '%"></u></s></div>';
+    }).join("") + '</div>';
+  }
+  const VD_NOTE = "Vitamina D vem pouco da comida: o principal é sol e, se o médico indicar, suplemento.";
+  function richIn(k, n, excl) {
+    return [...items].filter(([id, it]) => it.nut && it.nut.m && it.nut.m[k] && it.tag !== "evitar" && !["doce", "bebida"].includes(it.cat) && !URIC_IDS.includes(id) && !(excl || []).includes(id) && it.cat !== "tempero")
+      .map(([id, it]) => [id, it, it.nut.m[k] / Math.max(it.nut.k || 1, 20)]).sort((a, b) => b[2] - a[2]).slice(0, n);
+  }
+  const ingGrams = g => { const it = items.get(g.id); if (!it) return 0; return it.unit === "un" ? (g.g || (+g.q || 0) * ((it.nut && it.nut.pg) || 50)) : +g.q || 0; };
+  function dayMicro(d) {
+    const list = [];
+    SLOTS.forEach(s => { const r = recs.get((menu[d] || {})[s.id]); if (!r) return; const f = fac(d, s.id); (r.ing || []).forEach(g => list.push({ id: g.id, g: ingGrams(g) * f })); });
+    return micSum(list);
+  }
+  function renderDayMicro() {
+    const el = $("day-micro"); if (!el) return;
+    const { t, sem } = dayMicro(st.day);
+    const low = MIC.filter(m => !m.lim && m.k !== "vd").map(m => [m, t[m.k] / m.d]).sort((a, b) => a[1] - b[1]).filter(x => x[1] < 0.7).slice(0, 3);
+    const na = t.na / MICN.na.d;
+    const hints = low.map(([m, f]) => '<div><b>' + m.n + ' ' + Math.round(f * 100) + '%</b>: ' + richIn(m.k, 3).map(([, it]) => esc(it.name.split(" (")[0])).join(", ") + '</div>');
+    if (na > 1) hints.push('<div><b>Sódio ' + Math.round(na * 100) + '% do limite</b>: menos shoyu, embutidos e enlatados.</div>');
+    hints.push('<div>' + VD_NOTE + '</div>');
+    el.innerHTML = '<summary>VITAMINAS E MINERAIS DO DIA<small>' + (low.length ? "baixo: " + low.map(x => x[0].n).join(", ") : "tudo bem coberto") + '</small></summary>' +
+      micGrid(t, 1) + '<div class="mhint">' + (low.length ? '<div>Para reforçar:</div>' : "") + hints.join("") +
+      (sem.length ? '<div>Sem dados: ' + sem.map(id => esc((items.get(id) || {}).name || id)).join(", ") + '.</div>' : "") + '<div>Estimativa (TACO/USDA), % da recomendação diária para homem adulto.</div></div>';
+  }
+
   /* ---------- Caldeirão ---------- */
   const NOMES = { cafe: "café da manhã", lanche: "lanche", almoco: "almoço", janta: "janta" };
   function tgt(ref) {
     const sh = ref === "lanche" ? (SHARE.lanche1 + SHARE.lanche2) / 2 : SHARE[ref];
     const c = cfg.kcal * sh;
-    const p = Math.round(cfg.prot * sh), g = Math.round(c * 0.27 / 9), cb = Math.max(0, Math.round((c - p * 4 - g * 9) / 4));
+    let p = Math.round(cfg.prot * sh), g = Math.round(c * 0.27 / 9), cb = Math.max(0, Math.round((c - p * 4 - g * 9) / 4));
+    if (potFoco === "prot") { p = Math.round(p * 1.35); cb = Math.max(0, Math.round((c - p * 4 - g * 9) / 4)); }
+    if (potFoco === "lowc") { cb = Math.round(cb * 0.5); g = Math.max(g, Math.round((c - p * 4 - cb * 4) / 9)); }
     const meal = ref === "almoco" || ref === "janta";
     return { k: [Math.round(c * 0.85 / 10) * 10, Math.round(c * 1.15 / 10) * 10], kc: Math.round(c), p, c: cb, g, v: meal ? 150 : 80, vmeal: meal, nome: NOMES[ref] };
   }
   const NOT_MORNING = new Set(["tilapia", "patinho", "sardinha", "calabresa", "lentilha", "grao-de-bico", "arroz", "feijao", "macarrao", "repolho", "couve", "couve-flor", "vagem", "espinafre", "pimentao", "brocolis", "abobora", "cebola", "alho", "molho-tomate", "cogumelo", "milho"]);
   const SUIT = { cafe: ["laticinio", "fruta", "carbo", "proteina"], lanche: ["laticinio", "fruta", "carbo", "proteina", "verdura"], almoco: ["proteina", "verdura", "carbo", "tempero"], janta: ["proteina", "verdura", "carbo", "tempero", "laticinio"] };
   const hour = new Date().getHours();
-  let potUndo = null, pot = [], potRef = hour < 9 ? "cafe" : hour < 11 ? "lanche" : hour < 14 ? "almoco" : hour < 18 ? "lanche" : "janta", potHave = true, potQ = "";
-  try { const s = JSON.parse(localStorage.getItem("caldeirao-v1") || "null"); if (s && Array.isArray(s.pot)) { pot = s.pot; if (s.ref) potRef = s.ref; } } catch (e) {}
-  const savePot = () => { try { localStorage.setItem("caldeirao-v1", JSON.stringify({ pot, ref: potRef })); } catch (e) {} };
+  let potFoco = "eq", potUndo = null, pot = [], potRef = hour < 9 ? "cafe" : hour < 11 ? "lanche" : hour < 14 ? "almoco" : hour < 18 ? "lanche" : "janta", potHave = true, potQ = "";
+  try { const s = JSON.parse(localStorage.getItem("caldeirao-v1") || "null"); if (s && Array.isArray(s.pot)) { pot = s.pot; if (s.ref) potRef = s.ref; if (s.foco) potFoco = s.foco; } } catch (e) {}
+  const savePot = () => { try { localStorage.setItem("caldeirao-v1", JSON.stringify({ pot, ref: potRef, foco: potFoco })); } catch (e) {} };
   const porcao = it => (it.nut && (it.nut.por || it.nut.pg)) || 50;
-  function macro(id, g) { const it = items.get(id); const n = it && it.nut; if (!n) return { k: 0, p: 0, c: 0, g: 0, sem: true }; const f = g / 100; return { k: n.k * f, p: n.p * f, c: n.c * f, g: n.g * f }; }
+  function macro(id, g) { const it = items.get(id); const n = it && it.nut; if (!n || n.k == null) return { k: 0, p: 0, c: 0, g: 0, sem: true }; const f = g / 100; return { k: n.k * f, p: (n.p || 0) * f, c: (n.c || 0) * f, g: (n.g || 0) * f }; }
   function potTotals() {
     const t = { k: 0, p: 0, c: 0, g: 0, verd: 0, sem: [] };
     pot.forEach(x => { const m = macro(x.id, x.g); t.k += m.k; t.p += m.p; t.c += m.c; t.g += m.g; if (m.sem) t.sem.push(x.id); const it = items.get(x.id); if (it && (it.cat === "verdura" || ((potRef === "cafe" || potRef === "lanche") && it.cat === "fruta")) && !NOT_VEG.has(x.id)) t.verd += x.g; });
@@ -1361,6 +1438,32 @@ const ROOM = (function () {
   function roundG(it, g) {
     if (it.nut && it.nut.pg && it.unit === "un") return Math.max(it.nut.pg, Math.round(g / it.nut.pg) * it.nut.pg);
     return Math.max(5, Math.round(g / 5) * 5);
+  }
+  const potShare = () => potRef === "lanche" ? (SHARE.lanche1 + SHARE.lanche2) / 2 : SHARE[potRef];
+  function focoMic() {
+    if (potFoco === "fib") return "fib";
+    if (potFoco === "vd") return "vd";
+    if (potFoco === "vit") {
+      const { t } = micSum(pot), sh = potShare();
+      return MIC.filter(m => !m.lim && !["fib", "vd"].includes(m.k)).map(m => [m.k, t[m.k] / (m.d * sh)]).sort((a, b) => a[1] - b[1])[0][0];
+    }
+    return null;
+  }
+  function focoCard() {
+    const k = focoMic(); if (!k) return null;
+    const m = MICN[k], sh = potShare(), alvo = m.d * sh, have = micSum(pot).t[k], need = alvo - have;
+    const morning = potRef === "cafe" || potRef === "lanche", inPot = new Set(pot.map(x => x.id));
+    const lack = need > alvo * 0.1;
+    let cands = [...items].filter(([id, it]) => !inPot.has(id) && it.nut && it.nut.m && it.nut.m[k] && it.tag !== "evitar" && !["doce", "bebida", "pronto", "tempero"].includes(it.cat) && !URIC_IDS.includes(id) && !(morning && NOT_MORNING.has(id)) && !(!morning && ["whey", "cereais", "achocolatado", "leite-po"].includes(id)) && !NOT_VEG.has(id) && !["farinha-trigo", "pipoca", "chia", "canela", "cacau"].includes(id) && !((it.nut.m.na || 0) > 400));
+    const home = cands.filter(([, it]) => (it.qty || 0) > 0); if (home.length >= 2) cands = home;
+    const score = it => it.nut.m[k] * porcao(it) / (1 + (it.nut.k || 0) * porcao(it) / 100 / 250);
+    cands.sort((a, b) => score(b[1]) - score(a[1]));
+    const opts = lack ? cands.slice(0, 3).map(([id, it]) => {
+      const por = porcao(it); let g = need / (it.nut.m[k] / 100); g = roundG(it, Math.min(por * 1.6, Math.max(por * 0.5, g)));
+      const mm = macro(id, g), v = (it.nut.m[k] || 0) * g / 100;
+      return { id, g, txt: "+" + fmtMic(v, m.u) + " de " + m.n.toLowerCase() + " · " + num(Math.round(mm.k)) + " kcal" + ((it.qty || 0) <= 0 ? " · comprar" : "") };
+    }) : [];
+    return { gr: { id: "f", nome: "FOCO: " + m.n.toUpperCase(), spr: "book", key: k }, have, alvo, need, lack, over: false, opts, mic: m };
   }
   function groupsFor(ref) {
     const morning = ref === "cafe" || ref === "lanche", meal = !morning;
@@ -1412,15 +1515,20 @@ const ROOM = (function () {
     let t = potTotals();
     suggestGroups(t).forEach(sg => {
       const k = sg.gr.key;
-      if (!sg.lack || !sg.opts.length || k === "g") return;
+      if (!sg.lack || !sg.opts.length || (k === "g" && potFoco !== "lowc")) return;
       const hasSrc = k === "verd" ? pot.some(x => sg.gr.test(x.id, items.get(x.id) || {})) : k === "g" ? pot.some(x => fr(items.get(x.id) || {}, "g") >= 0.45) : pot.some(x => isSrc(x.id, k));
       if (hasSrc) return;
       if (k !== "verd" && sg.need < sg.alvo * (k === "g" ? 0.5 : 0.3)) return;
       const o = sg.opts[0]; pot.push({ id: o.id, g: o.g }); added.push((items.get(o.id) || {}).name || o.id);
     });
+    const fc = focoCard();
+    if (fc && fc.lack && fc.opts.length && !pot.some(x => { const o = micOf(x.id, x.g); return o && o[fc.gr.key] >= fc.alvo * 0.15; })) {
+      const o = fc.opts[0]; pot.push({ id: o.id, g: o.g }); added.push((items.get(o.id) || {}).name || o.id);
+    }
     // 2) otimiza as gramas (descida por coordenadas com limites)
-    const T = [tg.kc, tg.p, tg.c, tg.g];
-    const W = [2.2 / tg.kc, 2.2 / Math.max(tg.p, 1), 0.8 / Math.max(tg.c, 1), 0.45 / Math.max(tg.g, 1)];
+    const fk = fc ? fc.gr.key : null;
+    const T = [tg.kc, tg.p, tg.c, tg.g, fk ? fc.alvo : 0];
+    const W = [2.2 / tg.kc, 2.2 / Math.max(tg.p, 1), 0.8 / Math.max(tg.c, 1), 0.45 / Math.max(tg.g, 1), fk ? 0.7 / Math.max(fc.alvo, 0.01) : 0];
     const vars = pot.map(x => {
       const it = items.get(x.id) || {}, n = it.nut, por = porcao(it);
       const fixed = !n || (it.cat === "tempero" && fr(it, "g") < 0.45);
@@ -1428,17 +1536,17 @@ const ROOM = (function () {
       const isVeg = it.cat === "verdura" && !NOT_VEG.has(x.id);
       let lo = Math.max(unitG || 5, por * 0.3), hi = Math.max(por * 2.5, x.g);
       if (isVeg && tg.vmeal) lo = Math.max(lo, Math.min(tg.v, 120));
-      return { x, a: n ? [n.k / 100, n.p / 100, n.c / 100, n.g / 100] : [0, 0, 0, 0], v: x.g, x0: x.g, por, lo, hi, fixed, unitG };
+      return { x, a: n ? [(n.k || 0) / 100, (n.p || 0) / 100, (n.c || 0) / 100, (n.g || 0) / 100, fk && n.m ? (n.m[fk] || 0) / 100 : 0] : [0, 0, 0, 0, 0], v: x.g, x0: x.g, por, lo, hi, fixed, unitG };
     });
     const solve = (iters) => {
       for (let it = 0; it < iters; it++) {
         vars.forEach(vr => {
           if (vr.fixed) return;
-          const cur = [0, 0, 0, 0]; vars.forEach(o => o.a.forEach((av, j) => cur[j] += av * o.v));
-          const r = cur.map((c, j) => c - T[j]);
+          const cur = [0, 0, 0, 0, 0]; vars.forEach(o => o.a.forEach((av, j) => cur[j] += av * o.v));
+          const r = cur.map((c, j) => j === 4 ? Math.min(0, c - T[j]) : c - T[j]);
           const lam = 0.02 / (vr.por * vr.por);
           let num_ = lam * (vr.v - vr.x0), den = lam;
-          vr.a.forEach((av, j) => { num_ += W[j] * W[j] * av * r[j]; den += W[j] * W[j] * av * av; });
+          vr.a.forEach((av, j) => { if (j === 4 && r[j] === 0) return; num_ += W[j] * W[j] * av * r[j]; den += W[j] * W[j] * av * av; });
           if (den > 0) vr.v = Math.min(vr.hi, Math.max(vr.lo, vr.v - num_ / den));
         });
       }
@@ -1458,6 +1566,7 @@ const ROOM = (function () {
   function renderPot() {
     document.querySelectorAll("#potref button").forEach(b => b.classList.toggle("on", b.dataset.pref === potRef));
     document.querySelectorAll("[data-pothave]").forEach(b => b.classList.toggle("on", (b.dataset.pothave === "1") === potHave));
+    document.querySelectorAll("#potfoco button").forEach(b => b.classList.toggle("on", b.dataset.foco === potFoco));
     const t = potTotals(), tg = tgt(potRef);
     const state = !pot.length ? "empty" : t.k > tg.k[1] ? "over" : t.k < tg.k[0] ? "under" : "ok";
     $("pot-k").textContent = num(Math.round(t.k));
@@ -1475,12 +1584,17 @@ const ROOM = (function () {
     else if (state === "under") msg = "Faltam cerca de " + num(Math.round(tg.k[0] - t.k)) + " kcal para fechar um " + tg.nome + ".";
     else msg = "Dentro da meta de " + tg.nome + "." + (t.p < tg.p ? " Só falta um pouco de proteína." : " Boa combinação!");
     if (t.sem.length) msg += " Sem calorias cadastradas: " + t.sem.map(id => (items.get(id) || {}).name || id).join(", ") + ".";
-    const sgs = suggestGroups(t);
+    const sgs = suggestGroups(t); const fc = focoCard(); if (fc) sgs.unshift(fc);
+    { const mi = micSum(pot), fk = focoMic(), wasOpen = $("pot-micro").open, low = MIC.filter(m => !m.lim && pot.length && mi.t[m.k] / (m.d * potShare()) < 0.4).length;
+      $("pot-micro").innerHTML = '<summary>VITAMINAS E MINERAIS<small>% da parte desta refeição' + (pot.length ? " · " + low + " baixos" : "") + '</small></summary>' + micGrid(mi.t, potShare(), fk) +
+        '<div class="mhint">' + (fk === "vd" ? "<div>" + VD_NOTE + "</div>" : "") + (mi.sem.length ? '<div>Sem dados: ' + mi.sem.map(id => esc((items.get(id) || {}).name || id)).join(", ") + '.</div>' : "") + '</div>';
+      $("pot-micro").open = wasOpen; }
     $("pot-msg").innerHTML = '<span>' + esc(msg) + '</span><h3 class="st">SUGESTÕES</h3><div class="sgrid">' + sgs.map(sg => {
       const g = sg.gr, cls = sg.lack ? "need" : sg.over ? "" : "done";
       const tag = sg.lack ? "FALTA" : sg.over ? "PASSOU" : "OK";
-      const gap = sg.lack ? "Faltam " + num(Math.round(sg.need)) + " g de " + Math.round(sg.alvo) + " g." + (sg.opts.length ? " Escolha um:" : " Nada adequado no estoque.")
-        : sg.over ? "Tem " + num(Math.round(sg.have)) + " g, meta " + Math.round(sg.alvo) + " g. Diminua um pouco." : "No ponto: " + num(Math.round(sg.have)) + " de " + Math.round(sg.alvo) + " g.";
+      const U = sg.mic ? v => fmtMic(v, sg.mic.u) : v => num(Math.round(v)) + " g";
+      const gap = sg.lack ? "Faltam " + U(sg.need) + " de " + U(sg.alvo) + "." + (sg.opts.length ? " Escolha um:" : " Nada adequado no estoque.")
+        : sg.over ? "Tem " + U(sg.have) + ", meta " + U(sg.alvo) + ". Diminua um pouco." : "No ponto: " + U(sg.have) + " de " + U(sg.alvo) + ".";
       return '<div class="scard ' + cls + '"><h4>' + img(g.spr, 16) + g.nome + '<em>' + tag + '</em></h4><div class="gap">' + gap + '</div>' + sg.opts.map(o => {
         const it = items.get(o.id);
         return '<button class="sug" data-potadd="' + esc(o.id) + '" data-g="' + o.g + '">' + img(iconKey(it, o.id), 24) + '<span>' + esc(it.name) + ' ' + num(o.g) + ' g<small>' + o.txt + '</small></span></button>';
@@ -1783,7 +1897,7 @@ const ROOM = (function () {
     async variedade(o) { if (readOnly) throw new Error("sem permissão"); cfg = Object.assign({}, cfg, { var: Math.max(0, Math.min(3, +o.receitas || 0)), maxIng: +o.ingredientes >= 3 ? +o.ingredientes : 0 }); render(); await fdb.collection("cardapio").doc("config").set(cfg); return cfg; },
     async definirMetas(c) { if (readOnly) throw new Error("sem permissão"); if (!(c.kcal >= 1200)) throw new Error("meta abaixo do mínimo seguro"); cfg = Object.assign({}, cfg, c); render(); await fdb.collection("cardapio").doc("config").set(cfg); return cfg; },
     sortearSemana: () => rndWeek(), sortearDia: dia => { if (dia) st.day = dia; return rndDay(); }, sortearRefeicao: (dia, slot) => { if (dia) st.day = dia; return rndSlot(slot); },
-    async nutricao(mapa) { if (readOnly) throw new Error("sem permissão"); let n = 0; for (const [id, nut] of Object.entries(mapa)) { const it = items.get(id); if (!it) continue; it.nut = nut; await flush(id); n++; } render(); return n; },
+    async nutricao(mapa) { if (readOnly) throw new Error("sem permissão"); let n = 0; for (const [id, nut] of Object.entries(mapa)) { const it = items.get(id); if (!it) continue; it.nut = Object.assign({}, it.nut || {}, nut); await flush(id); n++; } render(); return n; },
     async excluirItem(id) { if (readOnly) throw new Error("sem permissão"); items.delete(id); render(); await flush(id); return true; },
     async fiz(rid) { await cook(rid); return true; },
     async trocar(dia, slot, rid) { if (readOnly) throw new Error("sem permissão"); menu[dia] = Object.assign({}, menu[dia] || {}, { [slot]: rid }); render(); await fdb.collection("cardapio").doc("semana").set(menu); return true; },
