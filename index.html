@@ -126,6 +126,10 @@ nav.bottom a i { position: absolute; top: -6px; right: 4px; font-style: normal; 
 .sug { display: flex; align-items: center; gap: 6px; padding: 4px 8px; background: var(--panel-2); border: 3px solid var(--ink); box-shadow: 0 3px 0 var(--ink); font-size: 19px; text-align: left; }
 .sug small { color: var(--muted); font-size: 16px; display: block; }
 .potact { display: flex; gap: 8px; flex-wrap: wrap; }
+.varbox { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+.varbox label { display: flex; flex-direction: column; gap: 4px; font-size: 16px; letter-spacing: 1px; color: var(--muted, #b9b1d6); }
+.varbox select, .varbox input { padding: 6px 8px; background: var(--ink); border: 2px solid var(--panel-2); color: var(--text); font-size: 20px; font-family: inherit; width: 100%; }
+@media (max-width: 520px) { .varbox { grid-template-columns: 1fr; } }
 .potsave { display: flex; gap: 8px; }
 .potsave input { flex: 1; min-width: 0; padding: 6px 10px; background: var(--ink); border: 3px solid var(--panel-2); color: var(--text); }
 .pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
@@ -208,7 +212,7 @@ body.ro .edit-only { display: none !important; }
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="config.js?v=1794881141"></script>
+<script src="config.js?v=1794882212"></script>
 </head>
 <body>
 <div class="wrap">
@@ -296,8 +300,21 @@ body.ro .edit-only { display: none !important; }
       <button class="btn" id="rnd-week">SORTEAR SEMANA</button>
       <button class="btn ghost" id="rnd-day">SORTEAR ESTE DIA</button>
       <button class="btn ghost" id="rnd-undo" hidden>DESFAZER</button>
+      <button class="btn ghost" id="rnd-copy">REPETIR ESTE DIA NA SEMANA</button>
       <label class="toggle" for="rnd-home" style="font-size:18px"><input type="checkbox" id="rnd-home"> Priorizar o que tenho em casa</label>
     </div>
+    <div class="varbox px edit-only">
+      <label>VARIEDADE NO SORTEIO
+        <select id="rnd-var">
+          <option value="0">Livre (máxima variedade)</option>
+          <option value="1">Igual todo dia</option>
+          <option value="2">2 receitas por refeição</option>
+          <option value="3">3 receitas por refeição</option>
+        </select></label>
+      <label>MÁX. DE INGREDIENTES NA SEMANA
+        <input id="rnd-ing" type="number" min="3" max="60" step="1" placeholder="sem limite" inputmode="numeric"></label>
+    </div>
+    <p class="note" id="rnd-info"></p>
     <div class="totals" id="daytot"></div>
     <div class="px" id="meals"></div>
     <h3 class="st">CALORIAS POR DIA</h3>
@@ -1009,6 +1026,8 @@ const ROOM = (function () {
       '<button class="btn small edit-only" id="goal-edit">AJUSTAR METAS</button>';
     $("goalnote").textContent = "Meta: " + num(Math.round(cfg.kcal * 0.93)) + " a " + num(Math.round(cfg.kcal * 1.07)) + " kcal por dia e pelo menos " + num(cfg.prot) + " g de proteína.";
     $("rnd-undo").hidden = !undoMenu; $("rnd-home").checked = preferHome;
+    $("rnd-var").value = String(cfg.var || 0); if (document.activeElement !== $("rnd-ing")) $("rnd-ing").value = cfg.maxIng || "";
+    { const wk = weekVariety(); $("rnd-info").textContent = "Esta semana usa " + wk.recs + " receitas diferentes e " + wk.ings + " ingredientes diferentes (sem contar temperos e óleos)" + (cfg.maxIng ? ". Limite: " + cfg.maxIng + "." : "."); }
     const missing = new Set(); SLOTS.forEach(s => { const r = recs.get(m[s.id]); if (r) recStatus(r).miss.forEach(g => missing.add(g.id)); });
     $("daytot").innerHTML = '<div class="stat ' + kc + '"><b>' + num(t.k) + '</b><span>KCAL NO DIA</span></div>' +
       '<div class="stat ' + (t.p >= cfg.prot * 0.95 ? "ok" : "warn") + '"><b>' + num(t.p) + ' g</b><span>PROTEÍNA</span></div>' +
@@ -1108,6 +1127,7 @@ const ROOM = (function () {
     if (!guard()) return;
     menu[st.day] = Object.assign({}, menu[st.day] || {}, { [slot]: rid });
     if (menu[st.day].x) { const x = Object.assign({}, menu[st.day].x); delete x[slot]; menu[st.day].x = x; }
+    if (cfg.var === 1) DAYS.forEach(([d]) => { menu[d] = JSON.parse(JSON.stringify(menu[st.day])); });
     render();
     try { await fdb.collection("cardapio").doc("semana").set(menu); } catch (e) { failed(e); }
   }
@@ -1177,6 +1197,7 @@ const ROOM = (function () {
     if (d.rndslot) return rndSlot(d.rndslot);
     if (t.id === "rnd-week") return rndWeek();
     if (t.id === "rnd-day") return rndDay();
+    if (t.id === "rnd-copy") return copyDay();
     if (t.id === "rnd-undo") { if (undoMenu) { menu = undoMenu; undoMenu = null; saveMenu("Cardápio anterior restaurado."); } return; }
     if (t.id === "goal-edit") return openGoals();
     if (t.id === "g-use") { const c = goalCalc(); if (c) { $("g-kcal").value = c.sug; $("g-prot").value = c.prot; goalRender(); } return; }
@@ -1220,6 +1241,14 @@ const ROOM = (function () {
   $("q").addEventListener("input", e => { st.q = e.target.value; render(); });
   $("pot-q").addEventListener("input", e => { potQ = e.target.value; renderPot(); });
   $("rnd-home").addEventListener("change", e => { preferHome = e.target.checked; });
+  const saveVar = async () => {
+    const v = +$("rnd-var").value || 0, n = Math.round(+$("rnd-ing").value) || 0;
+    cfg = Object.assign({}, cfg, { var: v, maxIng: n >= 3 ? n : 0 });
+    render(); if (readOnly) return;
+    try { await fdb.collection("cardapio").doc("config").set(cfg); toast("Variedade salva. Use SORTEAR SEMANA para aplicar."); } catch (err) { failed(err); }
+  };
+  $("rnd-var").addEventListener("change", saveVar);
+  $("rnd-ing").addEventListener("change", saveVar);
   ["g-peso", "g-alt", "g-idade", "g-sexo", "g-ativ", "g-ritmo", "g-kcal", "g-prot"].forEach(id => $(id).addEventListener("input", goalRender));
   ["g-sexo", "g-ativ", "g-ritmo"].forEach(id => $(id).addEventListener("change", goalRender));
   $("gdlg").addEventListener("submit", async e => {
@@ -1526,11 +1555,40 @@ const ROOM = (function () {
     if (combo[1][0] === combo[3][0]) pen += 2;
     return Math.abs(k - cfg.kcal) / cfg.kcal * 12 + Math.max(0, cfg.prot - p) / cfg.prot * 10 + pen;
   }
-  function pickDay(counts, prev) {
-    const pools = SLOTS.map(s => pool(s.ref));
+  const ingKey = id => { const it = items.get(id); return it && it.cat === "tempero" ? null : id; };
+  function ingSet(recIds) {
+    const set = new Set();
+    recIds.forEach(id => { const r = recs.get(id); if (r) (r.ing || []).forEach(g => { const k = ingKey(g.id); if (k) set.add(k); }); });
+    return set;
+  }
+  function weekVariety() {
+    const ids = new Set(); DAYS.forEach(([d]) => SLOTS.forEach(s => { const id = (menu[d] || {})[s.id]; if (recs.has(id)) ids.add(id); }));
+    return { recs: ids.size, ings: ingSet(ids).size };
+  }
+  const sample = (arr, k) => { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a.slice(0, k); };
+  // escolhe, para cada refeição, o grupo de receitas que a semana pode usar
+  function subPools(k, cap) {
+    const full = SLOTS.map(s => pool(s.ref));
+    if (full.some(pl => !pl.length)) return null;
+    if (!k && !cap) return [full];
+    const sizes = k ? [k] : [4, 3, 2];
+    const out = [];
+    for (const kk of sizes) {
+      for (let a = 0; a < 600 && out.length < 30; a++) {
+        const pls = full.map(pl => sample(pl, Math.min(kk, pl.length)));
+        if (pls[2].length === 1 && pls[4].length === 1 && pls[2][0][0] === pls[4][0][0]) continue;
+        if (cap && ingSet(pls.flat().map(([id]) => id)).size > cap) continue;
+        out.push(pls);
+      }
+      if (out.length >= 10) break;
+    }
+    return out;
+  }
+  function pickDay(counts, prev, pools, tries) {
+    pools = pools || SLOTS.map(s => pool(s.ref));
     if (pools.some(pl => !pl.length)) return null;
     const best = [];
-    for (let n = 0; n < 2500; n++) {
+    for (let n = 0; n < (tries || 2500); n++) {
       const combo = pools.map(pl => pl[Math.floor(Math.random() * pl.length)]);
       const fx = fitFactors(combo);
       const sc = scoreDay(combo, counts, prev, fx);
@@ -1539,6 +1597,7 @@ const ROOM = (function () {
     const top = best.slice(0, 3); const pick = top[Math.floor(Math.random() * top.length)], ch = pick.combo;
     const day = Object.fromEntries(SLOTS.map((s, i) => [s.id, ch[i][0]]));
     const x = Object.fromEntries(Object.entries(pick.fx).filter(([, f]) => f !== 1)); if (Object.keys(x).length) day.x = x;
+    day.__sc = pick.sc;
     return day;
   }
   function countsExcept(skipDay) {
@@ -1552,21 +1611,44 @@ const ROOM = (function () {
   }
   async function rndWeek() {
     if (!guard() || !recs.size) return;
-    undoMenu = JSON.parse(JSON.stringify(menu));
-    const counts = {}, next = {}; let prev = null;
-    for (const [d] of DAYS) {
-      const day = pickDay(counts, prev); if (!day) { toast("Faltam receitas para alguma refeição."); return; }
-      next[d] = day; prev = day;
-      SLOTS.forEach(s => { counts[day[s.id]] = (counts[day[s.id]] || 0) + 1; counts.__uric = (counts.__uric || 0) + uricOf(recs.get(day[s.id])); });
+    const k = cfg.var || 0, cap = cfg.maxIng || 0;
+    const groups = subPools(k, cap);
+    if (!groups) { toast("Faltam receitas para alguma refeição."); return; }
+    if (!groups.length) { toast("Com " + cap + " ingredientes não dá para montar a semana. Aumente o limite."); return; }
+    const restricted = !!(k || cap);
+    let bestWeek = null, bestSc = Infinity;
+    for (const pls of groups) {
+      const counts = {}, next = {}; let prev = null, tot = 0;
+      for (const [d] of DAYS) {
+        const day = pickDay(counts, prev, pls, restricted ? 400 : 2500); if (!day) return;
+        tot += day.__sc; delete day.__sc; next[d] = day; prev = day;
+        SLOTS.forEach(s => { counts[day[s.id]] = (counts[day[s.id]] || 0) + 1; counts.__uric = (counts.__uric || 0) + uricOf(recs.get(day[s.id])); });
+      }
+      if (tot < bestSc) { bestSc = tot; bestWeek = next; }
     }
-    menu = next; await saveMenu("Semana sorteada dentro da meta.");
+    undoMenu = JSON.parse(JSON.stringify(menu));
+    menu = bestWeek;
+    const wk = weekVariety();
+    await saveMenu("Semana sorteada: " + wk.recs + " receitas, " + wk.ings + " ingredientes.");
   }
   async function rndDay() {
     if (!guard() || !recs.size) return;
     undoMenu = JSON.parse(JSON.stringify(menu));
     const i = DAYS.findIndex(([d]) => d === st.day); const prev = i > 0 ? menu[DAYS[i - 1][0]] : null;
-    const day = pickDay(countsExcept(st.day), prev); if (!day) return;
-    menu[st.day] = day; await saveMenu(DAYFULL[st.day] + " sorteado.");
+    let pools = null;
+    if (cfg.var || cfg.maxIng) {
+      pools = SLOTS.map(s => { const ids = new Set(); DAYS.forEach(([d]) => { if (d !== st.day) { const id = (menu[d] || {})[s.id]; if (recs.has(id)) ids.add(id); } }); return [...ids].map(id => [id, recs.get(id)]); });
+      if (pools.some(pl => !pl.length)) pools = null;
+    }
+    const day = pickDay(countsExcept(st.day), prev, pools, pools ? 400 : 2500); if (!day) return; delete day.__sc;
+    menu[st.day] = day; await saveMenu(DAYFULL[st.day] + " sorteado" + (pools ? " com as receitas da semana." : "."));
+  }
+  async function copyDay(src) {
+    if (!guard()) return; src = src || st.day;
+    const m = menu[src]; if (!m || !SLOTS.some(s => recs.has(m[s.id]))) { toast("Esse dia está vazio."); return; }
+    undoMenu = JSON.parse(JSON.stringify(menu));
+    DAYS.forEach(([d]) => { menu[d] = JSON.parse(JSON.stringify(m)); });
+    await saveMenu("Cardápio de " + DAYFULL[src] + " repetido na semana toda.");
   }
   async function rndSlot(slotId) {
     if (!guard()) return;
@@ -1579,7 +1661,8 @@ const ROOM = (function () {
     if (!opts.length) { toast("Não há outra receita para essa refeição."); return; }
     undoMenu = JSON.parse(JSON.stringify(menu));
     cur[slotId] = opts[Math.floor(Math.random() * opts.length)].id; menu[st.day] = cur;
-    await saveMenu("Trocado por " + recs.get(cur[slotId]).name + ".");
+    if (cfg.var === 1) DAYS.forEach(([d]) => { menu[d] = JSON.parse(JSON.stringify(cur)); });
+    await saveMenu("Trocado por " + recs.get(cur[slotId]).name + (cfg.var === 1 ? " em todos os dias." : "."));
   }
 
   /* ---------- Ponte para o Claude (usada pelo navegador) ---------- */
@@ -1594,6 +1677,8 @@ const ROOM = (function () {
     async definir(id, qtd) { if (readOnly) throw new Error("sem permissão"); const it = items.get(id); if (!it) throw new Error("item não existe: " + id); it.qty = Math.max(0, Number(qtd)); render(); await flush(id); return it.qty; },
     async salvarItem(id, dados) { if (readOnly) throw new Error("sem permissão"); const base = items.get(id) || { name: "", zone: "geladeira", cat: "proteina", qty: 0, unit: "g", min: 0, step: 100, tag: "ok", spr: "", note: "" }; const novo = id || slug(dados.name || "item"); items.set(novo, Object.assign({}, base, dados)); render(); await flush(novo); return novo; },
     metas: () => Object.assign({}, cfg),
+    async padronizar(dia) { if (readOnly) throw new Error("sem permissão"); await copyDay(dia); return JSON.parse(JSON.stringify(menu)); },
+    async variedade(o) { if (readOnly) throw new Error("sem permissão"); cfg = Object.assign({}, cfg, { var: Math.max(0, Math.min(3, +o.receitas || 0)), maxIng: +o.ingredientes >= 3 ? +o.ingredientes : 0 }); render(); await fdb.collection("cardapio").doc("config").set(cfg); return cfg; },
     async definirMetas(c) { if (readOnly) throw new Error("sem permissão"); if (!(c.kcal >= 1200)) throw new Error("meta abaixo do mínimo seguro"); cfg = Object.assign({}, cfg, c); render(); await fdb.collection("cardapio").doc("config").set(cfg); return cfg; },
     sortearSemana: () => rndWeek(), sortearDia: dia => { if (dia) st.day = dia; return rndDay(); }, sortearRefeicao: (dia, slot) => { if (dia) st.day = dia; return rndSlot(slot); },
     async nutricao(mapa) { if (readOnly) throw new Error("sem permissão"); let n = 0; for (const [id, nut] of Object.entries(mapa)) { const it = items.get(id); if (!it) continue; it.nut = nut; await flush(id); n++; } render(); return n; },
