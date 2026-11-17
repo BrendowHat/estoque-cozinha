@@ -169,7 +169,7 @@ body.ro .edit-only { display: none !important; }
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="config.js?v=1794878907"></script>
+<script src="config.js?v=1794880376"></script>
 </head>
 <body>
 <div class="wrap">
@@ -823,8 +823,8 @@ const ROOM = (function () {
       (editable ? selectHTML(s, rid) : "") + '</div></div>';
   }
   function selectHTML(s, rid) {
-    const opts = [...recs].filter(([, r]) => r.refeicao !== "preparo")
-      .sort((a, b) => (a[1].refeicao === s.ref ? 0 : 1) - (b[1].refeicao === s.ref ? 0 : 1) || (a[1].ord || 99) - (b[1].ord || 99));
+    const opts = [...recs].filter(([id, r]) => r.refeicao === s.ref || id === rid)
+      .sort((a, b) => (a[1].ord || 99) - (b[1].ord || 99) || a[1].name.localeCompare(b[1].name, "pt-BR"));
     return '<select class="edit-only" data-slot="' + s.id + '" aria-label="Trocar ' + esc(s.name) + '"><option value="">— trocar —</option>' +
       opts.map(([id, r]) => '<option value="' + esc(id) + '"' + (id === rid ? " selected" : "") + '>' + esc(r.name) + ' (' + num(r.kcal) + ' kcal)</option>').join("") + '</select>';
   }
