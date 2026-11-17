@@ -169,7 +169,7 @@ body.ro .edit-only { display: none !important; }
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="config.js?v=1794878508"></script>
+<script src="config.js?v=1794878907"></script>
 </head>
 <body>
 <div class="wrap">
@@ -1110,6 +1110,23 @@ const ROOM = (function () {
     recs.set(id, r); $("rmodal").classList.remove("show"); st.openRec = id; render();
     try { await fdb.collection("receitas").doc(id).set(r); toast("Receita salva."); } catch (err) { failed(err); }
   });
+
+  /* ---------- Ponte para o Claude (usada pelo navegador) ---------- */
+  const flush = id => { clearTimeout(timers[id]); delete timers[id]; saveItemNow(id); return chains[id]; };
+  window.estoque = {
+    pronto: () => ({ carregado: loaded, podeEditar: !readOnly, itens: items.size, receitas: recs.size }),
+    itens: () => [...items].map(([id, it]) => ({ id, nome: it.name, qtd: it.qty, un: it.unit, lugar: it.zone, tipo: it.cat, meta: it.min, dieta: it.tag })),
+    receitas: () => [...recs].map(([id, r]) => ({ id, nome: r.name, refeicao: r.refeicao, kcal: r.kcal, prot: r.prot, ing: r.ing, falta: recStatus(r).miss.map(g => g.id) })),
+    cardapio: () => JSON.parse(JSON.stringify(menu)),
+    compras: () => shopText(),
+    async ajustar(id, delta) { if (readOnly) throw new Error("sem permissão"); const it = items.get(id); if (!it) throw new Error("item não existe: " + id); it.qty = Math.max(0, Math.round(((+it.qty || 0) + Number(delta)) * 10) / 10); render(); await flush(id); return it.qty; },
+    async definir(id, qtd) { if (readOnly) throw new Error("sem permissão"); const it = items.get(id); if (!it) throw new Error("item não existe: " + id); it.qty = Math.max(0, Number(qtd)); render(); await flush(id); return it.qty; },
+    async salvarItem(id, dados) { if (readOnly) throw new Error("sem permissão"); const base = items.get(id) || { name: "", zone: "geladeira", cat: "proteina", qty: 0, unit: "g", min: 0, step: 100, tag: "ok", spr: "", note: "" }; const novo = id || slug(dados.name || "item"); items.set(novo, Object.assign({}, base, dados)); render(); await flush(novo); return novo; },
+    async excluirItem(id) { if (readOnly) throw new Error("sem permissão"); items.delete(id); render(); await flush(id); return true; },
+    async fiz(rid) { await cook(rid); return true; },
+    async trocar(dia, slot, rid) { if (readOnly) throw new Error("sem permissão"); menu[dia] = Object.assign({}, menu[dia] || {}, { [slot]: rid }); render(); await fdb.collection("cardapio").doc("semana").set(menu); return true; },
+    async salvarReceita(id, r) { if (readOnly) throw new Error("sem permissão"); const novo = id || slug(r.name || "receita"); const full = Object.assign({ refeicao: "janta", ord: 50, ing: [], passos: [], kcal: 0, prot: 0, tempo: "" }, recs.get(novo) || {}, r); recs.set(novo, full); render(); await fdb.collection("receitas").doc(novo).set(full); return novo; }
+  };
 
   /* ---------- Início ---------- */
   $("logo").src = spr("fridge");
