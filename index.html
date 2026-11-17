@@ -43,7 +43,7 @@ h3.st { font-family: var(--font-display); font-size: 9px; margin: 0; line-height
 
 /* navegação inferior */
 nav.bottom { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; background: var(--ink); border-top: 3px solid var(--panel-2); display: flex; justify-content: center; padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); }
-nav.bottom .in { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; width: 100%; max-width: 780px; }
+nav.bottom .in { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; width: 100%; max-width: 780px; }
 nav.bottom a { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 2px 5px; text-decoration: none; color: var(--muted); border: 3px solid transparent; position: relative; }
 nav.bottom a span { font-family: var(--font-display); font-size: 7px; line-height: 1.3; }
 nav.bottom a.on { color: var(--ink); background: var(--accent); border-color: var(--ink); }
@@ -79,6 +79,35 @@ nav.bottom a i { position: absolute; top: -6px; right: 4px; font-style: normal; 
 .filters input { flex: 1 1 180px; min-width: 0; padding: 6px 10px; background: var(--ink); border: 3px solid var(--panel-2); color: var(--text); }
 .fchip { padding: 2px 10px; background: transparent; border: 2px solid var(--panel-2); color: var(--muted); }
 .fchip.on { border-color: var(--accent); color: var(--accent); }
+.pchips { display: flex; flex-wrap: wrap; gap: 6px; }
+.pchips button { display: flex; align-items: center; gap: 6px; padding: 4px 10px 4px 6px; background: var(--ink); border: 3px solid var(--panel-2); color: var(--muted); font-size: 19px; }
+.pchips button small { font-size: 15px; opacity: .8; }
+.pchips button.on { border-color: var(--accent); color: var(--text); background: var(--panel-2); }
+.prep-top { padding: 12px; display: grid; gap: 10px; }
+.prep-top .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.prep-top .stats div { background: var(--ink); border: 2px solid var(--panel-2); padding: 6px; text-align: center; }
+.prep-top .stats b { display: block; font-size: 26px; color: var(--accent); }
+.prep-top .stats span { font-family: var(--font-display); font-size: 6px; color: var(--muted); }
+.pstep { padding: 10px 12px; margin-bottom: 10px; display: grid; gap: 8px; }
+.pstep > header { display: flex; align-items: center; gap: 10px; }
+.pstep > header label { display: flex; align-items: center; gap: 10px; flex: 1; cursor: pointer; }
+.pstep > header input { width: 24px; height: 24px; accent-color: var(--ok); flex: none; }
+.pstep > header h4 { margin: 0; font-family: var(--font-display); font-size: 9px; line-height: 1.5; }
+.pstep > header em { font-style: normal; font-size: 17px; color: var(--muted); white-space: nowrap; }
+.pstep.done { opacity: .55; }
+.pstep.done h4 { text-decoration: line-through; }
+.pstep ul { margin: 0; padding-left: 22px; display: grid; gap: 4px; font-size: 19px; }
+.pstep ul b { color: var(--accent); font-weight: normal; }
+.pstep .sub { font-size: 17px; color: var(--muted); }
+.pstep details { background: var(--ink); border: 2px solid var(--panel-2); padding: 6px 8px; }
+.pstep details summary { cursor: pointer; font-size: 19px; }
+.pstep details ol { margin: 6px 0 0; padding-left: 22px; font-size: 18px; display: grid; gap: 4px; }
+.boxes { display: grid; gap: 6px; }
+.box { display: grid; grid-template-columns: 74px 1fr; gap: 8px; background: var(--ink); border: 2px solid var(--panel-2); padding: 6px 8px; font-size: 18px; }
+.box > span:first-child { font-family: var(--font-display); font-size: 7px; line-height: 1.6; color: var(--muted); }
+.box .tag { display: inline-block; font-size: 15px; padding: 0 5px; margin-left: 4px; border: 2px solid currentColor; }
+.box .tag.frz { color: #7cc4ff; } .box .tag.gel { color: var(--ok); } .box .tag.dia { color: var(--accent); }
+.box small { display: block; color: var(--muted); font-size: 16px; }
 
 .group { display: flex; flex-direction: column; }
 .ghead { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: var(--panel-2); border: 3px solid var(--ink); border-bottom: 0; }
@@ -241,7 +270,7 @@ body.ro .edit-only { display: none !important; }
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="config.js?v=1794883664"></script>
+<script src="config.js?v=1794884236"></script>
 </head>
 <body>
 <div class="wrap">
@@ -351,6 +380,8 @@ body.ro .edit-only { display: none !important; }
       <label>MÁX. DE INGREDIENTES NA SEMANA
         <input id="rnd-ing" type="number" min="3" max="60" step="1" placeholder="sem limite" inputmode="numeric"></label>
     </div>
+    <div class="flabel edit-only">PROTEÍNA DA SEMANA (ALMOÇO E JANTA)</div>
+    <div class="pchips edit-only" id="prot-sel"></div>
     <p class="note" id="rnd-info"></p>
     <div class="totals" id="daytot"></div>
     <details class="micro px" id="day-micro"></details>
@@ -369,6 +400,14 @@ body.ro .edit-only { display: none !important; }
       <button data-r="falta">FALTA ALGO</button>
     </div>
     <div id="rlist"></div>
+  </section>
+
+  <!-- PREPARO -->
+  <section class="page" id="p-preparo">
+    <h2 class="pt">PREPARO DA SEMANA</h2>
+    <div class="flabel">DIA DO PREPARO</div>
+    <div class="seg days" id="prep-days"></div>
+    <div id="prep"></div>
   </section>
 
   <!-- COMPRAS -->
@@ -851,7 +890,7 @@ const ROOM = (function () {
   const TODAY = ["dom","seg","ter","qua","qui","sex","sab"][new Date().getDay()];
   const PAGES = [
     { id: "cozinha", name: "COZINHA", spr: "house" }, { id: "estoque", name: "ESTOQUE", spr: "fridge" },
-    { id: "caldeirao", name: "CALDEIRÃO", spr: "cauldron" }, { id: "cardapio", name: "CARDÁPIO", spr: "lunch" }, { id: "receitas", name: "RECEITAS", spr: "book" }, { id: "compras", name: "COMPRAS", spr: "cart" }
+    { id: "caldeirao", name: "CALDEIRÃO", spr: "cauldron" }, { id: "cardapio", name: "CARDÁPIO", spr: "lunch" }, { id: "receitas", name: "RECEITAS", spr: "book" }, { id: "preparo", name: "PREPARO", spr: "pan" }, { id: "compras", name: "COMPRAS", spr: "cart" }
   ];
   const ZN = Object.fromEntries(ZONES.map(z => [z.id, z]));
   const CN = Object.fromEntries(CATS.map(c => [c.id, c]));
@@ -970,6 +1009,7 @@ const ROOM = (function () {
     if (st.page === "caldeirao") renderPot(); else POT.stop();
     if (st.page === "receitas") renderReceitas();
     if (st.page === "compras") renderCompras(short);
+    if (st.page === "preparo") renderPreparo();
   }
 
   function emptyState() {
@@ -1075,6 +1115,7 @@ const ROOM = (function () {
     $("rnd-undo").hidden = !undoMenu; $("rnd-home").checked = preferHome;
     $("rnd-var").value = String(cfg.var || 0); if (document.activeElement !== $("rnd-ing")) $("rnd-ing").value = cfg.maxIng || "";
     { const wk = weekVariety(); $("rnd-info").textContent = "Esta semana usa " + wk.recs + " receitas diferentes e " + wk.ings + " ingredientes diferentes (sem contar temperos e óleos)" + (cfg.maxIng ? ". Limite: " + cfg.maxIng + "." : "."); }
+    renderProtSel();
     const missing = new Set(); SLOTS.forEach(s => { const r = recs.get(m[s.id]); if (r) recStatus(r).miss.forEach(g => missing.add(g.id)); });
     $("daytot").innerHTML = '<div class="stat ' + kc + '"><b>' + num(t.k) + '</b><span>KCAL NO DIA</span></div>' +
       '<div class="stat ' + (t.p >= cfg.prot * 0.95 ? "ok" : "warn") + '"><b>' + num(t.p) + ' g</b><span>PROTEÍNA</span></div>' +
@@ -1252,18 +1293,27 @@ const ROOM = (function () {
     if (d.pref) { potRef = d.pref; savePot(); renderPot(); return; }
     if (d.pothave !== undefined) { potHave = d.pothave === "1"; renderPot(); return; }
     if (d.potadd) return potAdd(d.potadd, d.g ? +d.g : 0);
-    if (d.potrm !== undefined) { pot.splice(+d.potrm, 1); savePot(); renderPot(); return; }
-    if (d.potinc !== undefined || d.potdec !== undefined) {
+    if (d.potrm !== undefined) { potReport = null; pot.splice(+d.potrm, 1); savePot(); renderPot(); return; }
+    if (d.potinc !== undefined || d.potdec !== undefined) { potReport = null;
       const i = +(d.potinc ?? d.potdec), x = pot[i]; if (!x) return; const it = items.get(x.id) || {};
       const step = (it.nut && it.nut.pg && it.unit === "un") ? it.nut.pg : (x.g >= 100 ? 10 : 5);
       x.g = Math.max(0, Math.round((x.g + (d.potinc !== undefined ? step : -step)) * 10) / 10); savePot(); renderPot(); return;
     }
     if (t.id === "pot-ate") return potAte();
-    if (t.id === "pot-clear") { pot = []; savePot(); renderPot(); return; }
+    if (t.id === "pot-clear") { pot = []; potReport = null; savePot(); renderPot(); return; }
     if (t.id === "pot-save") return potSaveRec();
     if (t.id === "pot-bal") return potBalance();
-    if (d.foco) { potFoco = d.foco; savePot(); renderPot(); return; }
-    if (t.id === "pot-undo") { if (potUndo) { pot = potUndo; potUndo = null; savePot(); renderPot(); toast("Caldeirão voltou como estava."); } return; }
+    if (d.foco) { potFoco = d.foco; potReport = null; savePot(); renderPot(); return; }
+    if (d.potaddbal) { addAndBalance(d.potaddbal, +d.g || 0); return; }
+    if (d.protsel !== undefined) {
+      if (!guard()) return;
+      let sel = protSel(); if (!d.protsel) sel = []; else sel = sel.includes(d.protsel) ? sel.filter(x => x !== d.protsel) : sel.concat(d.protsel);
+      cfg = Object.assign({}, cfg, { protSel: sel }); render();
+      fdb.collection("cardapio").doc("config").set(cfg).then(() => toast(sel.length ? "Proteína escolhida. Clique em SORTEAR SEMANA para aplicar." : "Qualquer proteína."), failed);
+      return;
+    }
+    if (d.prepday) { cfg = Object.assign({}, cfg, { prepDay: d.prepday }); render(); if (!readOnly) fdb.collection("cardapio").doc("config").set(cfg).catch(failed); return; }
+    if (t.id === "pot-undo") { if (potUndo) { pot = potUndo; potUndo = null; potReport = null; savePot(); renderPot(); toast("Caldeirão voltou como estava."); } return; }
     if (d.zone) { st.zone = d.zone; go("estoque"); if (st.page === "estoque") render(); return; }
     if (d.view) { st.view = d.view; render(); return; }
     if (d.tag) { st.tag = d.tag; render(); return; }
@@ -1310,7 +1360,7 @@ const ROOM = (function () {
     $("gmodal").classList.remove("show"); render();
     try { await fdb.collection("cardapio").doc("config").set(cfg); toast("Metas salvas. Use SORTEAR SEMANA para montar os dias em volta delas."); } catch (err) { failed(err); }
   });
-  document.addEventListener("change", e => { const i = e.target.dataset && e.target.dataset.potg; if (i === undefined) return; const x = pot[+i]; if (x) { x.g = Math.max(0, +e.target.value || 0); savePot(); renderPot(); } });
+  document.addEventListener("change", e => { const i = e.target.dataset && e.target.dataset.potg; if (i === undefined) return; const x = pot[+i]; if (x) { potReport = null; x.g = Math.max(0, +e.target.value || 0); savePot(); renderPot(); } });
   $("fab").addEventListener("click", () => st.page === "receitas" ? openRec(null) : openItem(null));
   ["modal", "rmodal", "amodal", "gmodal"].forEach(m => $(m).addEventListener("click", e => { if (e.target.id === m) $(m).classList.remove("show"); }));
   document.addEventListener("keydown", e => { if (e.key === "Escape") ["modal", "rmodal", "amodal", "gmodal"].forEach(m => $(m).classList.remove("show")); });
@@ -1505,63 +1555,87 @@ const ROOM = (function () {
     });
   }
   /* ---------- Equilibrar: ajusta as gramas para bater a meta da refeição ---------- */
+  /* Equilibrar: só mexe nos ingredientes escolhidos, persegue o foco dentro da faixa de calorias */
+  const FOCO_NOME = { eq: "equilíbrio", prot: "mais proteína", lowc: "menos carboidrato", fib: "mais fibra", vd: "vitamina D", vit: "mais vitaminas" };
+  let potReport = null;
+  function focusGoal() {
+    const tg = tgt(potRef), t = potTotals();
+    if (potFoco === "prot") return { nome: "Proteína", have: t.p, alvo: tg.p, ok: t.p >= tg.p * 0.95, u: "g", key: "p" };
+    if (potFoco === "lowc") return { nome: "Carboidrato (máx.)", have: t.c, alvo: tg.c, ok: t.c <= tg.c + 2, u: "g", key: "c", max: true };
+    const fk = focoMic();
+    if (fk) { const m = MICN[fk], have = micSum(pot).t[fk], alvo = m.d * potShare(); return { nome: m.n, have, alvo, ok: have >= alvo * 0.95, u: m.u, key: fk, mic: true }; }
+    return { nome: "Proteína", have: t.p, alvo: tg.p, ok: t.p >= tg.p * 0.93, u: "g", key: "p" };
+  }
   function potBalance() {
     if (!pot.length) { toast("Jogue pelo menos um ingrediente no caldeirão."); return; }
-    const tg = tgt(potRef);
+    const tg = tgt(potRef), before = pot.map(x => ({ id: x.id, g: x.g }));
     potUndo = JSON.parse(JSON.stringify(pot));
-    // 1) se faltar uma fonte importante, adiciona a melhor sugestão
-    const added = [];
-    const isSrc = (id, key) => { const it = items.get(id); if (!it || !it.nut) return false; if (key === "p") return fr(it, "p") >= 0.3; if (key === "c") return fr(it, "c") >= 0.5; return false; };
-    let t = potTotals();
-    suggestGroups(t).forEach(sg => {
-      const k = sg.gr.key;
-      if (!sg.lack || !sg.opts.length || (k === "g" && potFoco !== "lowc")) return;
-      const hasSrc = k === "verd" ? pot.some(x => sg.gr.test(x.id, items.get(x.id) || {})) : k === "g" ? pot.some(x => fr(items.get(x.id) || {}, "g") >= 0.45) : pot.some(x => isSrc(x.id, k));
-      if (hasSrc) return;
-      if (k !== "verd" && sg.need < sg.alvo * (k === "g" ? 0.5 : 0.3)) return;
-      const o = sg.opts[0]; pot.push({ id: o.id, g: o.g }); added.push((items.get(o.id) || {}).name || o.id);
-    });
-    const fc = focoCard();
-    if (fc && fc.lack && fc.opts.length && !pot.some(x => { const o = micOf(x.id, x.g); return o && o[fc.gr.key] >= fc.alvo * 0.15; })) {
-      const o = fc.opts[0]; pot.push({ id: o.id, g: o.g }); added.push((items.get(o.id) || {}).name || o.id);
-    }
-    // 2) otimiza as gramas (descida por coordenadas com limites)
-    const fk = fc ? fc.gr.key : null;
-    const T = [tg.kc, tg.p, tg.c, tg.g, fk ? fc.alvo : 0];
-    const W = [2.2 / tg.kc, 2.2 / Math.max(tg.p, 1), 0.8 / Math.max(tg.c, 1), 0.45 / Math.max(tg.g, 1), fk ? 0.7 / Math.max(fc.alvo, 0.01) : 0];
+    const fk = focoMic(), fAlvo = fk ? MICN[fk].d * potShare() : 0;
+    // dimensões: 0 kcal (faixa), 1 proteína, 2 carbo, 3 gordura, 4 micronutriente do foco
+    // modo: "band" = só penaliza fora da faixa; "min" = só abaixo; "max" = só acima; "two" = os dois lados
+    const D = [
+      { T: [tg.k[0], tg.k[1]], mode: "band", w: 25 / tg.kc },
+      { T: tg.p, mode: potFoco === "prot" ? "min" : "two", w: (potFoco === "prot" ? 5 : potFoco === "eq" ? 2.2 : 1.4) / Math.max(tg.p, 1) },
+      { T: tg.c, mode: potFoco === "lowc" ? "max" : "two", w: (potFoco === "lowc" ? 4 : potFoco === "eq" ? 0.8 : 0.3) / Math.max(tg.c, 1) },
+      { T: tg.g, mode: "two", w: (potFoco === "eq" ? 0.45 : 0.25) / Math.max(tg.g, 1) },
+      { T: fAlvo, mode: "min", w: fk ? 4 / Math.max(fAlvo, 0.01) : 0 }
+    ];
+    const resid = (j, c) => {
+      const d = D[j];
+      if (d.mode === "band") return c < d.T[0] ? c - d.T[0] : c > d.T[1] ? c - d.T[1] : 0;
+      if (d.mode === "min") return Math.min(0, c - d.T);
+      if (d.mode === "max") return Math.max(0, c - d.T);
+      return c - d.T;
+    };
     const vars = pot.map(x => {
       const it = items.get(x.id) || {}, n = it.nut, por = porcao(it);
-      const fixed = !n || (it.cat === "tempero" && fr(it, "g") < 0.45);
+      const fixed = !n || n.k == null || (it.cat === "tempero" && fr(it, "g") < 0.45);
       const unitG = n && n.pg && it.unit === "un" ? n.pg : 0;
-      const isVeg = it.cat === "verdura" && !NOT_VEG.has(x.id);
-      let lo = Math.max(unitG || 5, por * 0.3), hi = Math.max(por * 2.5, x.g);
-      if (isVeg && tg.vmeal) lo = Math.max(lo, Math.min(tg.v, 120));
-      return { x, a: n ? [(n.k || 0) / 100, (n.p || 0) / 100, (n.c || 0) / 100, (n.g || 0) / 100, fk && n.m ? (n.m[fk] || 0) / 100 : 0] : [0, 0, 0, 0, 0], v: x.g, x0: x.g, por, lo, hi, fixed, unitG };
+      const isVeg = (it.cat === "verdura" || it.cat === "fruta") && !NOT_VEG.has(x.id) && (n && n.k < 70);
+      const lo = isVeg ? Math.max(unitG || 5, Math.min(x.g, por)) : Math.max(unitG || 5, Math.min(x.g, por * 0.25)), hi = Math.max(por * 3, x.g * 1.5);
+      return { x, a: fixed ? [0, 0, 0, 0, 0] : [n.k / 100, (n.p || 0) / 100, (n.c || 0) / 100, (n.g || 0) / 100, fk && n.m && (n.m[fk] || 0) * por / 100 >= fAlvo * 0.1 ? (n.m[fk] || 0) / 100 : 0], v: x.g, x0: x.g, por, lo, hi, fixed, unitG };
     });
-    const solve = (iters) => {
-      for (let it = 0; it < iters; it++) {
-        vars.forEach(vr => {
-          if (vr.fixed) return;
-          const cur = [0, 0, 0, 0, 0]; vars.forEach(o => o.a.forEach((av, j) => cur[j] += av * o.v));
-          const r = cur.map((c, j) => j === 4 ? Math.min(0, c - T[j]) : c - T[j]);
-          const lam = 0.02 / (vr.por * vr.por);
-          let num_ = lam * (vr.v - vr.x0), den = lam;
-          vr.a.forEach((av, j) => { if (j === 4 && r[j] === 0) return; num_ += W[j] * W[j] * av * r[j]; den += W[j] * W[j] * av * av; });
-          if (den > 0) vr.v = Math.min(vr.hi, Math.max(vr.lo, vr.v - num_ / den));
-        });
-      }
+    const solve = iters => {
+      for (let it = 0; it < iters; it++) vars.forEach(vr => {
+        if (vr.fixed) return;
+        const cur = [0, 0, 0, 0, 0]; vars.forEach(o => o.a.forEach((av, j) => cur[j] += av * o.v));
+        const lam = 0.01 / (vr.por * vr.por); let nu = lam * (vr.v - vr.x0), de = lam;
+        vr.a.forEach((av, j) => { const r = resid(j, cur[j]); if (!av || !D[j].w) return; const w2 = D[j].w * D[j].w; nu += w2 * av * r; if (r !== 0 || D[j].mode === "two") de += w2 * av * av; });
+        de = Math.max(de, lam + 1e-9);
+        vr.v = Math.min(vr.hi, Math.max(vr.lo, vr.v - nu / de));
+      });
     };
-    solve(120);
+    solve(200);
     vars.forEach(vr => { if (!vr.fixed && vr.unitG) { vr.v = Math.max(vr.unitG, Math.round(vr.v / vr.unitG) * vr.unitG); vr.fixed = true; } });
-    solve(80);
+    solve(120);
     vars.forEach(vr => { if (!vr.unitG && !vr.fixed) vr.v = Math.max(5, Math.round(vr.v / 5) * 5); vr.x.g = vr.v; });
+    // relatório
+    const t = potTotals(), goal = focusGoal();
+    const changes = pot.map((x, i) => ({ id: x.id, de: before[i].g, para: x.g })).filter(c => Math.abs(c.de - c.para) >= 1);
+    let sug = [];
+    if (!goal.ok) {
+      if (goal.mic) { const fc = focoCard(); sug = fc ? fc.opts.slice(0, 3) : []; }
+      else { const g = suggestGroups(t).find(x => x.gr.key === (goal.key === "c" ? "p" : goal.key)); sug = g ? g.opts.slice(0, 3) : []; }
+    }
+    const kOk = t.k >= tg.k[0] && t.k <= tg.k[1];
+    potReport = { changes, goal, sug, kOk, k: Math.round(t.k), kr: tg.k };
     savePot(); renderPot();
-    t = potTotals();
-    let msg = "Equilibrado: " + num(Math.round(t.k)) + " kcal · P " + num(Math.round(t.p)) + " g";
-    if (added.length) msg += ". Adicionei " + (added.length > 1 ? added.slice(0, -1).join(", ") + " e " + added[added.length - 1] : added[0]);
-    if (t.k > tg.k[1] + 30) msg += ". Ainda passou: tire o item mais calórico";
-    else if (t.k < tg.k[0] - 30) msg += ". Ainda faltou: adicione algo das sugestões";
-    toast(msg + ".");
+    toast(goal.ok ? "Equilibrado: " + FOCO_NOME[potFoco] + " atingido." : "Equilibrei o que deu. Veja as sugestões para completar.");
+  }
+  function addAndBalance(id, g) {
+    const it = items.get(id); if (!it) return;
+    const ex = pot.find(x => x.id === id); if (ex) ex.g += g; else pot.push({ id, g });
+    POT.drop(iconKey(it, id)); potBalance();
+  }
+  function reportHTML() {
+    const R = potReport; if (!R) return "";
+    const G = R.goal, fmt = v => G.u === "g" ? num(Math.round(v)) + " g" : fmtMic(v, G.u);
+    const pc = G.max ? (G.have <= G.alvo ? 100 : Math.round(G.alvo / Math.max(G.have, 0.01) * 100)) : Math.min(100, Math.round(G.have / Math.max(G.alvo, 0.01) * 100));
+    return '<div class="scard ' + (G.ok ? "done" : "need") + '" style="opacity:1"><h4>⚖ RESULTADO · ' + esc(FOCO_NOME[potFoco].toUpperCase()) + '<em>' + (G.ok ? "META OK" : pc + "%") + '</em></h4>' +
+      '<div class="gap">' + esc(G.nome) + ': <b>' + fmt(G.have) + '</b> ' + (G.max ? "(máx. " : "de ") + fmt(G.alvo) + (G.max ? ")" : "") + ' · ' + num(R.k) + ' kcal ' + (R.kOk ? "(dentro da faixa)" : "(faixa " + R.kr[0] + "–" + R.kr[1] + ")") + '</div>' +
+      (R.changes.length ? '<div class="gap">Ajustei: ' + R.changes.map(c => esc(nm(c.id)) + ' ' + num(c.de) + '→<b>' + num(c.para) + ' g</b>').join(" · ") + '</div>' : '<div class="gap">As quantidades já estavam no melhor ponto possível.</div>') +
+      (!G.ok ? '<div class="gap">' + (R.sug.length ? "Só com esses ingredientes não chega. Adicione um destes (eu reequilibro na hora):" : "Só com esses ingredientes não chega, e não achei nada adequado no estoque.") + '</div>' +
+        R.sug.map(o => { const it = items.get(o.id); return '<button class="sug" data-potaddbal="' + esc(o.id) + '" data-g="' + o.g + '">' + img(iconKey(it, o.id), 24) + '<span>+ ' + esc(it.name) + ' ' + num(o.g) + ' g<small>' + o.txt + '</small></span></button>'; }).join("") : "") + '</div>';
   }
   function renderPot() {
     document.querySelectorAll("#potref button").forEach(b => b.classList.toggle("on", b.dataset.pref === potRef));
@@ -1589,7 +1663,8 @@ const ROOM = (function () {
       $("pot-micro").innerHTML = '<summary>VITAMINAS E MINERAIS<small>% da parte desta refeição' + (pot.length ? " · " + low + " baixos" : "") + '</small></summary>' + micGrid(mi.t, potShare(), fk) +
         '<div class="mhint">' + (fk === "vd" ? "<div>" + VD_NOTE + "</div>" : "") + (mi.sem.length ? '<div>Sem dados: ' + mi.sem.map(id => esc((items.get(id) || {}).name || id)).join(", ") + '.</div>' : "") + '</div>';
       $("pot-micro").open = wasOpen; }
-    $("pot-msg").innerHTML = '<span>' + esc(msg) + '</span><h3 class="st">SUGESTÕES</h3><div class="sgrid">' + sgs.map(sg => {
+    if (potFoco === "prot" || potFoco === "lowc") { const i = sgs.findIndex(x => x.gr.key === "p"); if (i > 0) sgs.unshift(sgs.splice(i, 1)[0]); }
+    $("pot-msg").innerHTML = '<span>' + esc(msg) + '</span>' + reportHTML() + '<h3 class="st">SUGESTÕES</h3><div class="sgrid">' + sgs.map(sg => {
       const g = sg.gr, cls = sg.lack ? "need" : sg.over ? "" : "done";
       const tag = sg.lack ? "FALTA" : sg.over ? "PASSOU" : "OK";
       const U = sg.mic ? v => fmtMic(v, sg.mic.u) : v => num(Math.round(v)) + " g";
@@ -1615,7 +1690,7 @@ const ROOM = (function () {
     POT.draw(pot.map(x => iconKey(items.get(x.id), x.id)), state);
   }
   function potAdd(id, g) {
-    const it = items.get(id); if (!it) return;
+    const it = items.get(id); if (!it) return; potReport = null;
     const ex = pot.find(x => x.id === id);
     const add = g || porcao(it);
     if (ex) ex.g = Math.round((ex.g + add) * 10) / 10; else pot.push({ id, g: add });
@@ -1747,7 +1822,27 @@ const ROOM = (function () {
 
   /* ---------- Sorteio do cardápio ---------- */
   const URIC = new Set(["patinho", "lentilha", "sardinha"]);
-  const pool = ref => [...recs].filter(([, r]) => r.refeicao === ref);
+  function mainProt(r) {
+    let best = null, bv = 0;
+    (r.ing || []).forEach(g => { const it = items.get(g.id); if (!it || it.cat !== "proteina" || !it.nut || g.id === "whey") return; const v = ingGrams(g) * (it.nut.p || 0); if (v > bv) { bv = v; best = g.id; } });
+    return best;
+  }
+  const isMeal = ref => ref === "almoco" || ref === "janta";
+  const protSel = () => (cfg.protSel || []).filter(id => items.has(id));
+  const pool = ref => {
+    const own = [...recs].filter(([, r]) => r.refeicao === ref), sel = protSel();
+    if (!isMeal(ref) || !sel.length) return own;
+    const mine = own.filter(([, r]) => sel.includes(mainProt(r)));
+    if (mine.length >= 2) return mine;
+    const both = [...recs].filter(([, r]) => isMeal(r.refeicao) && sel.includes(mainProt(r)));
+    return both.length ? both : own;
+  };
+  function renderProtSel() {
+    const cnt = {}; [...recs].forEach(([, r]) => { if (!isMeal(r.refeicao)) return; const p = mainProt(r); if (p) cnt[p] = (cnt[p] || 0) + 1; });
+    const sel = protSel();
+    $("prot-sel").innerHTML = '<button data-protsel="" class="' + (sel.length ? "" : "on") + '">QUALQUER</button>' +
+      Object.entries(cnt).sort((a, b) => b[1] - a[1]).map(([id, n]) => '<button data-protsel="' + esc(id) + '" class="' + (sel.includes(id) ? "on" : "") + '">' + img(iconKey(items.get(id), id), 24) + esc((items.get(id).name || id).split(" (")[0].replace("Peito ou sobrecoxa de frango", "Frango").replace("Filé de tilápia", "Tilápia").replace("Atum em água", "Atum")) + ' <small>' + n + '</small></button>').join("");
+  }
   const uricOf = r => (r.ing || []).some(g => URIC.has(g.id)) ? 1 : 0;
   const ADJ = ["cafe", "almoco", "janta"];
   function fitFactors(combo) {
@@ -1880,6 +1975,128 @@ const ROOM = (function () {
     if (cfg.var === 1) DAYS.forEach(([d]) => { menu[d] = JSON.parse(JSON.stringify(cur)); });
     await saveMenu("Trocado por " + recs.get(cur[slotId]).name + (cfg.var === 1 ? " em todos os dias." : "."));
   }
+
+  /* ---------- Guia de preparo da semana ---------- */
+  const COOKF = { arroz: 2.8, feijao: 2.5, "grao-de-bico": 2.2, lentilha: 2.5, macarrao: 2.3, frango: 0.75, patinho: 0.75, tilapia: 0.8, abobora: 0.9, brocolis: 0.9, "couve-flor": 0.9, vagem: 0.9, espinafre: 0.7, couve: 0.6, repolho: 0.7 };
+  const RAW_SALAD = new Set(["folhas", "tomate", "pepino"]);
+  const WHOLE_REC = /almondega|hamburguer|omelete|crepioca|pizza|panqueca|tapioca|cuscuz|sopa/;
+  const qtyTxt = (id, g) => { const it = items.get(id) || {}; const pg = it.nut && it.nut.pg; if (it.unit === "un" && pg) { const u = Math.round(g / pg * 10) / 10; return num(u) + " un"; } return num(Math.round(g)) + (it.unit === "ml" ? " ml" : " g"); };
+  const nm = id => ((items.get(id) || {}).name || id).split(" (")[0];
+  function weekPlan() {
+    const start = cfg.prepDay || "dom";
+    const i0 = DAYS.findIndex(([d]) => d === start);
+    const order = DAYS.slice(i0).concat(DAYS.slice(0, i0)).map(([d]) => d);
+    const meals = [], tot = {}, byRec = new Map();
+    order.forEach((d, off) => SLOTS.forEach(s => {
+      const rid = (menu[d] || {})[s.id], r = recs.get(rid); if (!r) return;
+      const f = fac(d, s.id); meals.push({ d, s, rid, r, f, off });
+      const e = byRec.get(rid) || { r, n: 0, f: 0, slots: new Set() }; e.n++; e.f += f; e.slots.add(s.ref); byRec.set(rid, e);
+      (r.ing || []).forEach(g => { const gr = ingGrams(g) * f; tot[g.id] = (tot[g.id] || 0) + gr; });
+    }));
+    return { start, order, meals, tot, byRec };
+  }
+  function prepSteps(P) {
+    const T = P.tot, has = id => (T[id] || 0) > 0, steps = [];
+    const usesIn = id => [...P.byRec].filter(([rid, e]) => (e.r.ing || []).some(g => g.id === id)).map(([rid, e]) => ({ rid, e, g: (e.r.ing.find(g => g.id === id) ? ingGrams(e.r.ing.find(g => g.id === id)) : 0) }));
+    const wholeG = id => usesIn(id).filter(u => WHOLE_REC.test(u.rid)).reduce((a, u) => a + u.g * u.e.f, 0);
+    // véspera
+    const soak = ["feijao", "grao-de-bico"].filter(has);
+    const thaw = ["frango", "patinho", "tilapia"].filter(id => has(id) && (items.get(id) || {}).zone === "freezer");
+    if (soak.length || thaw.length) steps.push({ id: "vespera", t: "NA VÉSPERA", min: 5, li: [
+      ...soak.map(id => "Deixe <b>" + qtyTxt(id, T[id]) + "</b> de " + nm(id).toLowerCase() + " de molho em água (troque a água antes de cozinhar)."),
+      ...thaw.map(id => "Passe <b>" + qtyTxt(id, T[id]) + "</b> de " + nm(id).toLowerCase() + " do freezer para a geladeira, para descongelar.")] });
+    // leguminosas
+    const leg = ["feijao", "grao-de-bico", "lentilha"].filter(has);
+    if (leg.length) steps.push({ id: "leg", t: "1. LIGUE A PANELA DE PRESSÃO", min: 10, sub: "Comece por aqui: é o que mais demora e cozinha sozinho enquanto você faz o resto.", li: leg.map(id =>
+      "<b>" + qtyTxt(id, T[id]) + "</b> de " + nm(id).toLowerCase() + " (cru) com 3x o volume de água · " + (id === "lentilha" ? "panela comum, 20 min" : id === "feijao" ? "30 min após pegar pressão" : "35 min após pegar pressão") + " · rende ≈ " + num(Math.round(T[id] * COOKF[id] / 10) * 10) + " g") });
+    // proteínas em lote
+    const prot = ["frango", "patinho", "tilapia"].filter(has), pli = [];
+    prot.forEach(id => {
+      const all = T[id], whole = wholeG(id), lote = all - whole;
+      if (lote > 1) {
+        const how = id === "patinho" ? "refogue tudo de uma vez numa panela grande com cebola e alho, até secar a água" : id === "tilapia" ? "tempere com limão, alho e sal e asse a 200 °C por 15–20 min" : "tempere tudo junto (alho, limão, sal, páprica) e asse a 200 °C por 25–35 min, virando na metade · ou grelhe em levas na frigideira";
+        pli.push("<b>" + qtyTxt(id, lote) + "</b> de " + nm(id).toLowerCase() + ": " + how + ". Rende ≈ " + num(Math.round(lote * COOKF[id] / 10) * 10) + " g pronto.");
+      }
+      if (whole > 1) pli.push("Separe <b>" + qtyTxt(id, whole) + "</b> de " + nm(id).toLowerCase() + " cru para as receitas que pedem ele cru (passo de finalizar).");
+    });
+    if (pli.length) steps.push({ id: "prot", t: (leg.length ? "2" : "1") + ". PROTEÍNAS NO FORNO", min: 15 * prot.length, sub: "Uma assadeira grande resolve tudo. Enquanto assa, siga para os próximos passos.", li: pli });
+    // grãos
+    const gr = []; let n = steps.length;
+    if (has("arroz")) gr.push("<b>" + qtyTxt("arroz", T.arroz) + "</b> de arroz cru · 2 partes de água para 1 de arroz, 20 min · rende ≈ " + num(Math.round(T.arroz * 2.8 / 10) * 10) + " g. Deixe um pouco mais firme: ele amolece ao reaquecer.");
+    if (has("macarrao")) gr.push("<b>" + qtyTxt("macarrao", T.macarrao) + "</b> de macarrão · cozinhe 2 min a menos que a embalagem, escorra e misture um fio de azeite para não grudar.");
+    if (gr.length) steps.push({ id: "graos", t: (n) + ". ARROZ E MASSA", min: 10, li: gr });
+    // legumes
+    const vg = [];
+    const blanch = ["brocolis", "couve-flor", "vagem", "espinafre"].filter(has);
+    if (blanch.length) vg.push("Congelados (" + blanch.map(id => nm(id).toLowerCase().replace(" congelado", "").replace(" congelada", "") + " <b>" + qtyTxt(id, T[id]) + "</b>").join(", ") + "): água fervendo 2–3 min ou frigideira tampada 4 min. Deixe firmes.");
+    if (has("abobora")) vg.push("Abóbora <b>" + qtyTxt("abobora", T.abobora) + "</b>: em cubos, cozinhe no vapor ou na água por 12–15 min (ou asse junto com o frango).");
+    const chop = ["cebola", "alho", "pimentao", "couve", "repolho", "cheiro-verde"].filter(has);
+    if (chop.length) vg.push("Pique tudo de uma vez e separe em potes: " + chop.map(id => nm(id).toLowerCase() + " <b>" + qtyTxt(id, T[id]) + "</b>").join(", ") + ".");
+    const raw = [...RAW_SALAD].filter(has);
+    if (raw.length) vg.push("Saladas (" + raw.map(id => nm(id).toLowerCase().split(" de pacote")[0] + " <b>" + qtyTxt(id, T[id]) + "</b>").join(", ") + "): lave, seque bem e guarde inteiras em pote com papel-toalha. Corte e tempere só na hora de comer.");
+    if (vg.length) steps.push({ id: "legumes", t: (steps.length) + ". LEGUMES E VERDURAS", min: 10 + 4 * vg.length, li: vg });
+    // finalizar receitas (almoço/janta)
+    const mealsRec = [...P.byRec].filter(([, e]) => [...e.slots].some(isMeal));
+    if (mealsRec.length) steps.push({ id: "final", t: (steps.length) + ". FINALIZE AS RECEITAS", min: 8 * mealsRec.length, sub: "Com as bases prontas, cada receita vira só montar e dar o toque final. Faça a quantidade da semana de uma vez.", recs: mealsRec });
+    // café e lanches
+    const snack = [...P.byRec].filter(([, e]) => ![...e.slots].some(isMeal));
+    if (snack.length) steps.push({ id: "lanches", t: (steps.length) + ". CAFÉ DA MANHÃ E LANCHES", min: 4 * snack.length, sub: "Deixe tudo porcionado: de manhã você só pega o pote. Frutas inteiras, cortadas só na hora (exceto mamão, que dura 2 dias cortado).", recs: snack });
+    // montar
+    steps.push({ id: "montar", t: "MONTE AS MARMITAS", min: 2 * P.meals.filter(m => isMeal(m.s.ref)).length, boxes: true });
+    let k = 1; steps.forEach(st_ => { if (st_.id !== "vespera") st_.t = (k++) + ". " + st_.t.replace(/^\d+\. /, ""); });
+    return steps;
+  }
+  function boxLine(m) {
+    const parts = (m.r.ing || []).filter(g => { const it = items.get(g.id); return it && it.cat !== "tempero" && !["cebola", "alho", "cheiro-verde"].includes(g.id); }).map(g => {
+      const raw = ingGrams(g) * m.f, cf = COOKF[g.id];
+      return nm(g.id).toLowerCase().replace("peito ou sobrecoxa de frango", "frango").replace(" congelado", "").replace(" congelada", "") + " " + (cf && !WHOLE_REC.test(m.rid) ? "≈" + num(Math.round(raw * cf / 5) * 5) + " g" : qtyTxt(g.id, raw));
+    });
+    return parts.join(" · ");
+  }
+  function storeTag(m) {
+    const salad = (m.r.ing || []).some(g => RAW_SALAD.has(g.id));
+    if (m.off === 0) return '<span class="tag dia">COMER HOJE</span>';
+    if (!isMeal(m.s.ref)) return '<span class="tag gel">GELADEIRA</span>';
+    if (m.off <= 3) return '<span class="tag gel">GELADEIRA</span>' + (salad ? '<span class="tag dia">SALADA À PARTE</span>' : "");
+    return '<span class="tag frz">FREEZER</span>' + (salad ? '<span class="tag dia">SALADA NO DIA</span>' : "");
+  }
+  function renderPreparo() {
+    const P = weekPlan();
+    $("prep-days").innerHTML = DAYS.map(([d, l]) => '<button data-prepday="' + d + '" class="' + (P.start === d ? "on" : "") + '">' + l + '</button>').join("");
+    if (!P.meals.length) { $("prep").innerHTML = '<p class="empty">O cardápio da semana está vazio. Monte ou sorteie na aba Cardápio.</p>'; return; }
+    const steps = prepSteps(P);
+    const key = "preparo-" + P.start + "-" + P.meals.map(m => m.rid).join("|").length + "-" + P.meals.length;
+    let done = {}; try { done = JSON.parse(localStorage.getItem("preparo-v1") || "{}"); if (done.key !== key) done = { key }; } catch (e) { done = { key }; }
+    const mins = steps.reduce((a, s) => a + (s.min || 0), 0);
+    const potes = P.meals.filter(m => isMeal(m.s.ref)).length, frz = P.meals.filter(m => isMeal(m.s.ref) && m.off > 3).length;
+    const recHTML = list => list.map(([rid, e]) => {
+      const ing = (e.r.ing || []).map(g => nm(g.id) + " " + qtyTxt(g.id, ingGrams(g) * e.f)).join(", ");
+      return '<details><summary><b>' + esc(e.r.name) + '</b> × ' + e.n + (e.n > 1 ? " porções" : " porção") + '</summary><div class="sub">Total da semana: ' + esc(ing) + '</div><ol>' + (e.r.passos || []).map(p => '<li>' + esc(p) + '</li>').join("") + '</ol></details>';
+    }).join("");
+    const boxes = () => '<div class="boxes">' + P.order.map(d => {
+      const ms = P.meals.filter(m => m.d === d); if (!ms.length) return "";
+      return ms.map(m => '<div class="box"><span>' + DAYFULL[d].slice(0, 3).toUpperCase() + '<br>' + esc(m.s.name.split(" (")[0].toUpperCase()) + '</span><div><b>' + esc(m.r.name) + '</b>' + storeTag(m) + '<small>' + esc(boxLine(m)) + '</small></div></div>').join("");
+    }).join("") + '</div>';
+    $("prep").innerHTML =
+      '<div class="prep-top px"><div class="stats"><div><b>' + Math.floor(mins / 60) + 'h' + String(mins % 60).padStart(2, "0") + '</b><span>MÃO NA MASSA</span></div><div><b>' + potes + '</b><span>MARMITAS</span></div><div><b>' + P.byRec.size + '</b><span>RECEITAS</span></div></div>' +
+      '<div class="note">Tudo num dia só: ' + DAYFULL[P.start] + '. Use panela de pressão, forno e fogão ao mesmo tempo. ' + (frz ? frz + " marmitas vão para o freezer (comida pronta dura 3 a 4 dias na geladeira)." : "") + '</div>' +
+      '<div class="note">Separe ' + potes + ' potes com tampa' + (frz ? " (" + frz + " que possam ir ao freezer)" : "") + ', etiquetas ou fita para escrever o dia, e potes pequenos para o café e os lanches.</div></div>' +
+      steps.map(s => '<section class="pstep px' + (done[s.id] ? " done" : "") + '"><header><label><input type="checkbox" data-prepchk="' + s.id + '"' + (done[s.id] ? " checked" : "") + '><h4>' + s.t + '</h4></label><em>≈ ' + s.min + ' min</em></header>' +
+        (s.sub ? '<div class="sub">' + s.sub + '</div>' : "") + (s.li ? '<ul>' + s.li.map(x => '<li>' + x + '</li>').join("") + '</ul>' : "") + (s.recs ? recHTML(s.recs) : "") + (s.boxes ? boxes() : "") + '</section>').join("") +
+      '<section class="pstep px"><header><h4>GUARDAR E ESQUENTAR</h4></header><ul>' +
+      '<li>Espere esfriar uns 30 min antes de fechar os potes e guarde logo. Nada de deixar a noite toda fora da geladeira.</li>' +
+      '<li><b>Geladeira</b>: comer em até 3–4 dias depois do preparo. <b>Freezer</b>: até 3 meses; passe para a geladeira na noite anterior.</li>' +
+      '<li>Sem micro-ondas: esquente na frigideira ou panela tampada com 2 colheres de água, fogo baixo, 5–8 min, mexendo. Congelado direto: 12–15 min.</li>' +
+      '<li>Salada e folhas não vão ao freezer: leve à parte e tempere na hora.</li>' +
+      '<li>As quantidades com ≈ são do alimento pronto (cozido); as outras são cru/como vem.</li></ul></section>';
+    try { localStorage.setItem("preparo-v1", JSON.stringify(done)); } catch (e) {}
+  }
+  document.addEventListener("change", e => {
+    const id = e.target.dataset && e.target.dataset.prepchk; if (!id) return;
+    let done = {}; try { done = JSON.parse(localStorage.getItem("preparo-v1") || "{}"); } catch (x) {}
+    done[id] = e.target.checked; try { localStorage.setItem("preparo-v1", JSON.stringify(done)); } catch (x) {}
+    e.target.closest(".pstep").classList.toggle("done", e.target.checked);
+  });
 
   /* ---------- Ponte para o Claude (usada pelo navegador) ---------- */
   const flush = id => { clearTimeout(timers[id]); delete timers[id]; saveItemNow(id); return chains[id]; };
